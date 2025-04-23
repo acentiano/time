@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chrispine Cheyo’s Student Management System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ==== Variables & Reset ==== */
+        :root {
+            --bg-light: #f7f9fc;
+            --bg-dark: #1f2532;
+            --card-light: #fff;
+            --card-dark: #2b303b;
+            --primary: #4e7ac7;
+            --accent: #50c4ab;
+            --text-light: #2e3440;
+            --text-dark: #eceff4;
+            --radius: 12px;
+            --gap: 1rem;
+            --trans: 0.4s;
+        }
+
+        [data-theme="light"] {
+            --bg: var(--bg-light);
+            --card: var(--card-light);
+            --text: var(--text-light);
+        }
+
+        [data-theme="dark"] {
+            --bg: var(--bg-dark);
+            --card: var(--card-dark);
+            --text: var(--text-dark);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            transition: background var(--trans), color var(--trans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ==== Fade-in Keyframe ==== */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* ==== Login Screen ==== */
+        #login-page {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #login-page .bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://source.unsplash.com/1600x900/?library,study')center/cover no-repeat;
+            filter: brightness(0.5);
+            z-index: -1;
+        }
+
+        #login-form {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            width: 320px;
+            animation: fadeIn .6s;
+        }
+
+        #login-form h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        #login-form label {
+            display: block;
+            margin: .5rem 0 .25rem;
+            font-weight: 600;
+        }
+
+        #login-form input {
+            width: 100%;
+            padding: .75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #ccc;
+            border-radius: var(--radius);
+            transition: border var(--trans);
+        }
+
+        #login-form input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        #login-form button {
+            width: 100%;
+            padding: .75rem;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background var(--trans);
+        }
+
+        #login-form button:hover {
+            background: var(--accent);
+        }
+
+        /* ==== Header ==== */
+        header {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--primary);
+            color: #fff;
+            padding: var(--gap);
+        }
+
+        header.show {
+            display: flex;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+        }
+
+        header nav {
+            display: flex;
+            gap: .5rem;
+        }
+
+        header nav button,
+        #theme-btn {
+            background: transparent;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            transition: transform var(--trans);
+        }
+
+        header nav button:hover,
+        #theme-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* ==== Main Dashboard ==== */
+        main {
+            display: none;
+            flex: 1;
+            padding: var(--gap);
+            overflow-y: auto;
+            gap: var(--gap);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        main.show {
+            display: grid;
+        }
+
+        .card {
+            background: var(--card);
+            padding: var(--gap);
+            border-radius: var(--radius);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            animation: fadeIn .6s forwards;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            transition: transform var(--trans);
+        }
+
+        .card h2 {
+            margin-bottom: .5rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: .5rem;
+        }
+
+        /* ==== Forms & Scrollable ==== */
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+            margin-bottom: var(--gap);
+        }
+
+        form>* {
+            flex: 1 1 auto;
+            padding: .5rem;
+            border: 1px solid #ccc;
+            border-radius: var(--radius);
+            transition: border var(--trans);
+        }
+
+        form>*:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        form button {
+            flex: 0 0 auto;
+            padding: .5rem 1rem;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background var(--trans);
+        }
+
+        form button:hover {
+            background: var(--accent);
+        }
+
+        .scroll {
+            max-height: 180px;
+            overflow-y: auto;
+            margin-top: .5rem;
+        }
+
+        .scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        /* ==== Slide-In & Toast ==== */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .slide-item {
+            animation: slideIn .4s forwards;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: #fff;
+            padding: 1rem;
+            border-radius: var(--radius);
+            animation: slideUp .4s forwards;
+        }
+
+        /* ==== Timetable Table ==== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: var(--gap);
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: .5rem;
+            text-align: center;
+        }
+
+        th {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* ==== Charts ==== */
+        .chart-wrap {
+            position: relative;
+            height: 200px;
+            margin-top: var(--gap);
+        }
+
+        /* ==== Extras: Search/Import Buttons ==== */
+        .module-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: .5rem;
+        }
+
+        .module-header input[type="search"] {
+            padding: .4rem;
+            border: 1px solid #ccc;
+            border-radius: var(--radius);
+            width: 60%;
+        }
+
+        .module-header button {
+            padding: .4rem .8rem;
+            border: none;
+            border-radius: var(--radius);
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer;
+            transition: background var(--trans);
+        }
+
+        .module-header button:hover {
+            background: var(--accent);
+        }
+
+        /* ==== Responsive ==== */
+        @media(max-width:600px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            #login-page {
+                justify-content: flex-start;
+                padding-top: 50px;
+            }
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+
+    <!-- LOGIN -->
+    <div id="login-page">
+        <div class="bg"></div>
+        <form id="login-form">
+            <h2>Student Dashboard Login</h2>
+            <label for="username">Username:</label>
+            <input id="username" name="username" type="text" required>
+            <label for="password">Password:</label>
+            <input id="password" name="password" type="password" required>
+            <button type="submit">Log In</button>
+        </form>
+    </div>
+
+    <!-- HEADER -->
+    <header id="dashboard-header">
+        <h1>Welcome, Chrispine Cheyo!</h1>
+        <nav aria-label="Widgets">
+            <button data-widget="docs-card">Documents</button>
+            <button data-widget="timetable-card">Timetable</button>
+            <button data-widget="courses-card">Courses</button>
+            <button data-widget="reminders-card">Reminders</button>
+            <button data-widget="progress-card">Progress</button>
+            <button data-widget="goals-card">Goals</button>
+            <button data-widget="exam-card">Exam Prep</button>
+            <button data-widget="analytics-card">Analytics</button>
+        </nav>
+        <button id="theme-btn" aria-label="Toggle Theme">🌓</button>
+    </header>
+
+    <!-- MAIN -->
+    <main id="dashboard-main">
+
+        <!-- Documents Module -->
+        <section id="docs-card" class="card" hidden>
+            <div class="module-header">
+                <h2>Documents</h2>
+                <div>
+                    <button id="import-docs">Import</button>
+                    <button id="export-data">Backup</button>
+                </div>
+            </div>
+            <input type="file" id="doc-input" multiple accept=".pdf,.doc,.jpg,.png">
+            <ul id="docs-list" class="scroll"></ul>
+        </section>
+
+        <!-- Timetable Module -->
+        <section id="timetable-card" class="card" hidden>
+            <div class="module-header">
+                <h2>Study Timetable</h2>
+                <button id="export-timetable">Backup</button>
+            </div>
+            <form id="timetable-form">
+                <select id="tt-day" required>
+                    <option value="" disabled selected>Day</option>
+                    <option>Monday</option>
+                    <option>Tuesday</option>
+                    <option>Wednesday</option>
+                    <option>Thursday</option>
+                    <option>Friday</option>
+                    <option>Saturday</option>
+                    <option>Sunday</option>
+                </select>
+                <input type="time" id="tt-start" required>
+                <input type="time" id="tt-end" required>
+                <input type="text" id="tt-subject" placeholder="Subject" required>
+                <button type="submit">Add Slot</button>
+            </form>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Subject</th>
+                        <th>Del</th>
+                    </tr>
+                </thead>
+                <tbody id="timetable-body" class="scroll"></tbody>
+            </table>
+        </section>
+
+        <!-- Courses Module -->
+        <section id="courses-card" class="card" hidden>
+            <div class="module-header">
+                <h2>Courses</h2>
+                <input type="search" id="course-search" placeholder="Search courses...">
+            </div>
+            <form id="course-form">
+                <input id="course-name" name="course-name" placeholder="Course Name" required>
+                <select id="course-priority" name="course-priority">
+                    <option>High</option>
+                    <option>Medium</option>
+                    <option>Low</option>
+                </select>
+                <button type="submit">Add Course</button>
+            </form>
+            <ul id="course-list" class="scroll"></ul>
+        </section>
+
+        <!-- Reminders Module -->
+        <section id="reminders-card" class="card" hidden>
+            <div class="module-header">
+                <h2>Reminders</h2>
+                <button id="clear-reminders">Clear All</button>
+            </div>
+            <form id="reminder-form">
+                <input id="reminder-text" name="reminder-text" placeholder="Reminder Text" required>
+                <input id="reminder-time" name="reminder-time" type="datetime-local" required>
+                <button type="submit">Set Reminder</button>
+            </form>
+            <ul id="reminder-list" class="scroll"></ul>
+        </section>
+
+        <!-- Progress Module -->
+        <section id="progress-card" class="card" hidden>
+            <h2>Progress Tracking</h2>
+            <div class="chart-wrap"><canvas id="study-chart"></canvas></div>
+            <button id="reset-progress">Reset Progress</button>
+        </section>
+
+        <!-- Goals Module -->
+        <section id="goals-card" class="card" hidden>
+            <div class="module-header">
+                <h2>Goals</h2>
+                <button id="export-goals">Backup</button>
+            </div>
+            <form id="goal-form">
+                <input id="goal-text" name="goal-text" placeholder="Add new goal" required>
+                <button type="submit">Add</button>
+            </form>
+            <ul id="goal-list" class="scroll"></ul>
+        </section>
+
+        <!-- Exam Prep Module -->
+        <section id="exam-card" class="card" hidden>
+            <h2>Exam Preparation</h2>
+            <button id="start-exam-session">Start 50-Min Session</button>
+        </section>
+
+        <!-- Analytics Module -->
+        <section id="analytics-card" class="card" hidden>
+            <h2>Analytics</h2>
+            <div class="chart-wrap"><canvas id="tasks-chart"></canvas></div>
+            <div class="chart-wrap"><canvas id="slots-chart"></canvas></div>
+        </section>
+
+    </main>
+
+    <script>
+        // Storage helper
+        const store = key => ({
+            get: () => JSON.parse(localStorage.getItem(key) || '[]'),
+            set: v => localStorage.setItem(key, JSON.stringify(v))
+        });
+
+        // Login logic
+        const loginPage = document.getElementById('login-page'),
+            loginForm = document.getElementById('login-form'),
+            headerEl = document.getElementById('dashboard-header'),
+            mainEl = document.getElementById('dashboard-main');
+
+        loginForm.addEventListener('submit', e => {
+            e.preventDefault();
+            if (loginForm.username.value === 'chris' && loginForm.password.value === '1261') {
+                loginPage.remove();
+                headerEl.classList.add('show');
+                mainEl.classList.add('show');
+                initializeDashboard();
+            } else {
+                alert('Invalid credentials');
+            }
+        });
+
+        // Theme toggle
+        document.getElementById('theme-btn').onclick = () => {
+            document.body.dataset.theme =
+                document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+        };
+
+        // Widget nav
+        document.querySelectorAll('nav button').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('main>section').forEach(s => s.hidden = true);
+                document.getElementById(btn.dataset.widget).hidden = false;
+            };
+        });
+
+        // Initialize dashboard
+        function initializeDashboard() {
+            Notification.requestPermission();
+            setupDocuments();
+            setupTimetable();
+            setupCourses();
+            setupReminders();
+            setupProgress();
+            setupGoals();
+            setupExamPrep();
+            setupAnalytics();
+            document.getElementById('docs-card').hidden = false;
+        }
+
+        // Documents
+        function setupDocuments() {
+            const inp = document.getElementById('doc-input'),
+                lst = document.getElementById('docs-list'),
+                ds = store('docs');
+            let docs = ds.get();
+            const render = () => { lst.innerHTML = docs.map(d => `<li>${d.name}</li>`).join(''); ds.set(docs); };
+            inp.onchange = e => { Array.from(e.target.files).forEach(f => docs.push({ name: f.name })); render(); };
+            document.getElementById('import-docs').onclick = () => {
+                const json = prompt('Paste backup JSON here');
+                try { docs = JSON.parse(json).docs || []; render(); } catch { alert('Invalid JSON'); }
+            };
+            document.getElementById('export-data').onclick = () => {
+                const a = document.createElement('a');
+                a.href = 'data:application/json,' + encodeURIComponent(JSON.stringify({ docs }));
+                a.download = 'docs-backup.json'; a.click();
+            };
+            render();
+        }
+
+        // Timetable
+        function setupTimetable() {
+            const f = document.getElementById('timetable-form'),
+                b = document.getElementById('timetable-body'),
+                ts = store('timetable');
+            let slots = ts.get();
+            const render = () => {
+                b.innerHTML = slots.map((s, i) => `
+          <tr class="slide-item">
+            <td>${s.day}</td><td>${s.start}</td><td>${s.end}</td><td>${s.subject}</td>
+            <td><button data-i="${i}">✖</button></td>
+          </tr>`).join('');
+                ts.set(slots);
+            };
+            f.onsubmit = e => {
+                e.preventDefault();
+                slots.push({ day: f['tt-day'].value, start: f['tt-start'].value, end: f['tt-end'].value, subject: f['tt-subject'].value });
+                f.reset(); render();
+            };
+            b.onclick = e => { if (!e.target.dataset.i) return; slots.splice(+e.target.dataset.i, 1); render(); };
+            document.getElementById('export-timetable').onclick = () => {
+                const a = document.createElement('a');
+                a.href = 'data:application/json,' + encodeURIComponent(JSON.stringify({ timetable: slots }));
+                a.download = 'timetable-backup.json'; a.click();
+            };
+            render();
+        }
+
+        // Courses
+        function setupCourses() {
+            const f = document.getElementById('course-form'),
+                lst = document.getElementById('course-list'),
+                search = document.getElementById('course-search'),
+                cs = store('courses');
+            let courses = cs.get();
+            const render = () => {
+                const filter = search.value.toLowerCase();
+                lst.innerHTML = courses.filter(c => c.name.toLowerCase().includes(filter)).map((c, i) =>
+                    `<li class="slide-item">${c.name}[${c.priority}]<button data-i="${i}">✖</button></li>`).join('');
+                cs.set(courses);
+            };
+            f.onsubmit = e => { e.preventDefault(); courses.push({ name: f['course-name'].value, priority: f['course-priority'].value }); f.reset(); render(); };
+            lst.onclick = e => { if (!e.target.dataset.i) return; courses.splice(+e.target.dataset.i, 1); render(); };
+            search.oninput = render;
+            render();
+        }
+
+        // Reminders
+        function setupReminders() {
+            const f = document.getElementById('reminder-form'),
+                lst = document.getElementById('reminder-list'),
+                clearBtn = document.getElementById('clear-reminders'),
+                rs = store('reminders');
+            let rems = rs.get();
+            const render = () => {
+                lst.innerHTML = rems.map((r, i) =>
+                    `<li class="slide-item">${new Date(r.time).toLocaleString()}: ${r.text}
+            <button data-i="${i}">✖</button></li>`).join('');
+                rs.set(rems);
+            };
+            f.onsubmit = e => {
+                e.preventDefault(); rems.push({ text: f['reminder-text'].value, time: f['reminder-time'].value });
+                setTimeout(() => { new Notification(f['reminder-text'].value); const t = document.createElement('div'); t.className = 'toast'; t.innerText = f['reminder-text'].value; document.body.append(t); setTimeout(() => t.remove(), 3000); }, new Date(f['reminder-time'].value) - Date.now());
+                f.reset(); render();
+            };
+            lst.onclick = e => { if (!e.target.dataset.i) return; rems.splice(+e.target.dataset.i, 1); render(); };
+            clearBtn.onclick = () => { rems = []; render(); };
+            Notification.requestPermission(); render();
+        }
+
+        // Progress
+        function setupProgress() {
+            const ctx = document.getElementById('study-chart').getContext('2d'),
+                ps = store('progress');
+            let d = ps.get() || { done: 0, remain: 1 };
+            const ch = new Chart(ctx, { type: 'pie', data: { labels: ['Done', 'Remaining'], datasets: [{ data: [d.done, d.remain], backgroundColor: ['var(--primary)', 'var(--accent)'] }] }, options: { animation: { animateScale: true } } });
+            document.getElementById('reset-progress').onclick = () => { d = { done: 0, remain: 1 }; ps.set(d); ch.data.datasets[0].data = [0, 1]; ch.update(); };
+        }
+
+        // Goals
+        function setupGoals() {
+            const f = document.getElementById('goal-form'),
+                lst = document.getElementById('goal-list'),
+                exBtn = document.getElementById('export-goals'),
+                gs = store('goals');
+            let goals = gs.get();
+            const render = () => {
+                lst.innerHTML = goals.map((g, i) => `<li class="slide-item">${g}<button data-i="${i}">✖</button></li>`).join('');
+                gs.set(goals);
+            };
+            f.onsubmit = e => { e.preventDefault(); goals.push(f['goal-text'].value); f.reset(); render(); };
+            lst.onclick = e => { if (!e.target.dataset.i) return; goals.splice(+e.target.dataset.i, 1); render(); };
+            exBtn.onclick = () => { const a = document.createElement('a'); a.href = 'data:application/json,' + encodeURIComponent(JSON.stringify({ goals })); a.download = 'goals-backup.json'; a.click(); };
+            render();
+        }
+
+        // Exam Prep
+        function setupExamPrep() {
+            document.getElementById('start-exam-session').onclick = () => alert('50-minute session started—focus!');
+        }
+
+        // Analytics
+        function setupAnalytics() {
+            const tctx = document.getElementById('tasks-chart').getContext('2d'),
+                sctx = document.getElementById('slots-chart').getContext('2d'),
+                cc = store('courses').get().length,
+                rc = store('reminders').get().length;
+            new Chart(tctx, { type: 'bar', data: { labels: ['Courses', 'Reminders'], datasets: [{ data: [cc, rc], backgroundColor: ['var(--primary)', 'var(--accent)'] }] }, options: { animation: { duration: 800 } } });
+            const dc = store('docs').get().length,
+                gc = store('goals').get().length;
+            new Chart(sctx, { type: 'doughnut', data: { labels: ['Docs', 'Goals'], datasets: [{ data: [dc, gc], backgroundColor: ['var(--primary)', 'var(--accent)'] }] }, options: { animation: { animateRotate: true } } });
+        }
+    </script>
+</body>
+
+</html>
